@@ -1,9 +1,11 @@
-FROM php:8.1-cli
+# Use official PHP with Apache image
+FROM php:8.1-apache
 
-WORKDIR /var/www/html
+# Install mysqli extension
+RUN docker-php-ext-install mysqli
 
-COPY . .
+# Copy all your code to Apache's root directory
+COPY . /var/www/html/
 
-EXPOSE 10000
-
-CMD ["php", "-S", "0.0.0.0:10000"]
+# Enable Apache rewrite module if needed
+RUN a2enmod rewrite
