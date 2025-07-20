@@ -2,22 +2,39 @@
 $content = file_get_contents("php://input");
 $update = json_decode($content, true);
 
-file_put_contents("log.txt", $content . PHP_EOL, FILE_APPEND);
+// ✅ DB connection (your free hosting DB)
+$host = "sql104.infinityfree.com";
+$username = "if0_39327390";  // your InfinityFree DB username
+$password = "Manish989887"; // your DB password
+$dbname = "if0_39327390_Newsite";
+
+$conn = new mysqli($host, $username, $password, $dbname);
+mysqli_set_charset($conn, "utf8mb4");
 
 if (isset($update["message"])) {
-    $chat_id = $update["message"]["chat"]["id"];
-    $text = $update["message"]["text"];
+    $chatId = $update["message"]["chat"]["id"];
+    $text = trim($update["message"]["text"]);
 
-    if ($text == "/start") {
-        $reply = "Welcome to our bot!";
+    // Assume user types book title or ID
+    $stmt = $conn->prepare("SELECT title, free_link FROM novels WHERE title = ? LIMIT 1");
+    $stmt->bind_param("s", $text);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result && $result->num_rows > 0) {
+        $book = $result->fetch_assoc();
+        $reply = "Here's your free link for *" . $book['title'] . "*:\n" . $book['free_link'];
     } else {
-        $reply = "You said: " . $text;
+        $reply = "Sorry, no free link found for \"$text\". Try exact title.";
     }
 
-    $url = "https://api.telegram.org/bot'8119508260:AAHyCkfoucWWxiJrFbHIzIAJvQZbZKst8a0/sendMessage";
+    // Send reply
+    $botToken = '8119508260:AAHyCkfoucWWxiJrFbHIzIAJvQZbZKst8a0';
+    $url = "https://api.telegram.org/bot$botToken/sendMessage";
     $data = [
-        "chat_id" => $chat_id,
-        "text" => $reply,
+        'chat_id' => $chatId,
+        'text' => $reply,
+        'parse_mode' => 'Markdown'
     ];
 
     file_get_contents($url . "?" . http_build_query($data));
